@@ -1,0 +1,80 @@
+function pickAllCards() {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Engine");
+
+    var numPlayers = sheet.getRange("B2").getValue();
+    var cardPlayers = sheet.getRange("B3").getValue();
+    var extraCards = sheet.getRange("B9").getValue();
+
+    // Define the ranges - types of cards
+    var ranges = [
+        sheet.getRange("D22:D30"), // Type 1
+        sheet.getRange("D33:D38"), // Type 2
+        sheet.getRange("D40:D45")  // Type 3
+    ];
+
+    // Reset values in all card ranges
+    ranges.forEach(function(range) {
+        range.setValue("99");  
+    });
+
+    // Assign guilty cards
+    ranges.forEach(function(range){
+        var numRows = range.getNumRows();
+        var guiltyOnes = [];
+        
+        while (guiltyOnes.length < 1){
+            var random = Math.floor(Math.random() * numRows);
+            if (!guiltyOnes.includes(random)){
+                guiltyOnes.push(random);
+            }
+        }
+
+        guiltyOnes.forEach(function(index){
+            range.getCell(index + 1, 1).setValue(0);
+        });
+    });
+
+    var totalCards = 0;
+    ranges.forEach(function(range) {
+        totalCards += range.getNumRows();
+    });
+
+    if (numPlayers < 2 || numPlayers > 6) {
+        throw new Error("Number of players must be between 2 and 6.");
+    }
+
+    // Assign extra cards
+    var assignedExtraCards = [];
+    while (assignedExtraCards.length < extraCards) {
+        var randomRangeIndex = Math.floor(Math.random() * ranges.length);
+        var selectedRange = ranges[randomRangeIndex];
+        var randomIndex = Math.floor(Math.random() * selectedRange.getNumRows());
+
+        var cardIdentifier = randomRangeIndex + "-" + randomIndex; // Unique identifier for each card
+
+        var cell = selectedRange.getCell(randomIndex + 1, 1);
+        if (!assignedExtraCards.includes(cardIdentifier) && cell.getValue() === 99) {
+            assignedExtraCards.push(cardIdentifier);
+            cell.setValue(100); // Assign a value to denote extra cards
+        }
+    }
+
+    // Assign cards to players
+    for (var player = 1; player <= numPlayers; player++) {
+        var assignedCards = [];
+        
+        while (assignedCards.length < cardPlayers) {
+            var randomRangeIndex = Math.floor(Math.random() * ranges.length);
+            var selectedRange = ranges[randomRangeIndex];
+            var randomIndex = Math.floor(Math.random() * selectedRange.getNumRows());
+
+            var cardIdentifier = randomRangeIndex + "-" + randomIndex; // Unique identifier for each card
+
+            var cell = selectedRange.getCell(randomIndex + 1, 1);
+            if (!assignedCards.includes(cardIdentifier) && cell.getValue() === 99) {
+                assignedCards.push(cardIdentifier);
+                cell.setValue(player);
+            }
+        }
+    }
+}
